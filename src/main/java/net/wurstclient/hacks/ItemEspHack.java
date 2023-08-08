@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -10,6 +10,7 @@ package net.wurstclient.hacks;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -24,7 +25,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
@@ -102,14 +102,13 @@ public final class ItemEspHack extends Hack implements UpdateListener,
 	{
 		// GL settings
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-		GL11.glEnable(GL11.GL_LINE_SMOOTH);
 		
 		matrixStack.push();
-		RenderUtils.applyRegionalRenderOffset(matrixStack);
 		
 		BlockPos camPos = RenderUtils.getCameraBlockPos();
 		int regionX = (camPos.getX() >> 9) * 512;
 		int regionZ = (camPos.getZ() >> 9) * 512;
+		RenderUtils.applyRegionalRenderOffset(matrixStack, regionX, regionZ);
 		
 		renderBoxes(matrixStack, partialTicks, regionX, regionZ);
 		
@@ -122,7 +121,6 @@ public final class ItemEspHack extends Hack implements UpdateListener,
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 		GL11.glDisable(GL11.GL_BLEND);
-		GL11.glDisable(GL11.GL_LINE_SMOOTH);
 	}
 	
 	private void renderBoxes(MatrixStack matrixStack, double partialTicks,
@@ -171,10 +169,10 @@ public final class ItemEspHack extends Hack implements UpdateListener,
 		Matrix4f matrix = matrixStack.peek().getPositionMatrix();
 		Tessellator tessellator = RenderSystem.renderThreadTesselator();
 		BufferBuilder bufferBuilder = tessellator.getBuffer();
-		RenderSystem.setShader(GameRenderer::getPositionShader);
+		RenderSystem.setShader(GameRenderer::getPositionProgram);
 		
-		Vec3d start =
-			RotationUtils.getClientLookVec().add(RenderUtils.getCameraPos());
+		Vec3d start = RotationUtils.getClientLookVec()
+			.add(RenderUtils.getCameraPos()).subtract(regionX, 0, regionZ);
 		
 		bufferBuilder.begin(VertexFormat.DrawMode.DEBUG_LINES,
 			VertexFormats.POSITION);
@@ -183,12 +181,15 @@ public final class ItemEspHack extends Hack implements UpdateListener,
 			Vec3d end = e.getBoundingBox().getCenter()
 				.subtract(new Vec3d(e.getX(), e.getY(), e.getZ())
 					.subtract(e.prevX, e.prevY, e.prevZ)
-					.multiply(1 - partialTicks));
+					.multiply(1 - partialTicks))
+				.subtract(regionX, 0, regionZ);
 			
-			bufferBuilder.vertex(matrix, (float)start.x - regionX,
-				(float)start.y, (float)start.z - regionZ).next();
-			bufferBuilder.vertex(matrix, (float)end.x - regionX, (float)end.y,
-				(float)end.z - regionZ).next();
+			bufferBuilder
+				.vertex(matrix, (float)start.x, (float)start.y, (float)start.z)
+				.next();
+			bufferBuilder
+				.vertex(matrix, (float)end.x, (float)end.y, (float)end.z)
+				.next();
 		}
 		tessellator.draw();
 	}

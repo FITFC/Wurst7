@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -18,12 +18,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.crash.CrashException;
@@ -44,7 +44,7 @@ public abstract class GameMenuScreenMixin extends Screen
 		super(text_1);
 	}
 	
-	@Inject(at = {@At("TAIL")}, method = {"initWidgets()V"})
+	@Inject(at = @At("TAIL"), method = "initWidgets()V")
 	private void onInitWidgets(CallbackInfo ci)
 	{
 		if(!WurstClient.INSTANCE.isEnabled())
@@ -60,14 +60,14 @@ public abstract class GameMenuScreenMixin extends Screen
 		int buttonY = -1;
 		int buttonI = -1;
 		
-		for(int i = 0; i < buttons.size(); ++i)
+		for(int i = 0; i < buttons.size(); i++)
 		{
 			ClickableWidget button = buttons.get(i);
 			
 			// insert Wurst button in place of feedback/report row
 			if(isFeedbackButton(button))
 			{
-				buttonY = button.y;
+				buttonY = button.getY();
 				buttonI = i;
 			}
 			
@@ -82,9 +82,11 @@ public abstract class GameMenuScreenMixin extends Screen
 				CrashReport.create(new IllegalStateException(),
 					"Someone deleted the Feedback button!"));
 		
-		wurstOptionsButton = new ButtonWidget(width / 2 - 102, buttonY, 204, 20,
-			Text.literal("            Options"), b -> openWurstOptions());
-		buttons.add(buttonI, wurstOptionsButton);
+		wurstOptionsButton = ButtonWidget
+			.builder(Text.literal("            Options"),
+				b -> openWurstOptions())
+			.dimensions(width / 2 - 102, buttonY, 204, 20).build();
+		buttons.add(wurstOptionsButton);
 	}
 	
 	private boolean isFeedbackButton(ClickableWidget button)
@@ -108,9 +110,9 @@ public abstract class GameMenuScreenMixin extends Screen
 		client.setScreen(new WurstOptionsScreen(this));
 	}
 	
-	@Inject(at = {@At("TAIL")},
-		method = {"render(Lnet/minecraft/client/util/math/MatrixStack;IIF)V"})
-	private void onRender(MatrixStack matrixStack, int mouseX, int mouseY,
+	@Inject(at = @At("TAIL"),
+		method = "render(Lnet/minecraft/client/gui/DrawContext;IIF)V")
+	private void onRender(DrawContext context, int mouseX, int mouseY,
 		float partialTicks, CallbackInfo ci)
 	{
 		if(!WurstClient.INSTANCE.isEnabled() || wurstOptionsButton == null)
@@ -123,16 +125,14 @@ public abstract class GameMenuScreenMixin extends Screen
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		
-		RenderSystem.setShaderTexture(0, wurstTexture);
-		
-		int x = wurstOptionsButton.x + 34;
-		int y = wurstOptionsButton.y + 2;
+		int x = wurstOptionsButton.getX() + 34;
+		int y = wurstOptionsButton.getY() + 2;
 		int w = 63;
 		int h = 16;
 		int fw = 63;
 		int fh = 16;
 		float u = 0;
 		float v = 0;
-		drawTexture(matrixStack, x, y, u, v, w, h, fw, fh);
+		context.drawTexture(wurstTexture, x, y, u, v, w, h, fw, fh);
 	}
 }

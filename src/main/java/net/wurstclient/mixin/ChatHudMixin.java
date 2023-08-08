@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -28,7 +27,7 @@ import net.wurstclient.event.EventManager;
 import net.wurstclient.events.ChatInputListener.ChatInputEvent;
 
 @Mixin(ChatHud.class)
-public class ChatHudMixin extends DrawableHelper
+public class ChatHudMixin
 {
 	@Shadow
 	private List<ChatHudLine.Visible> visibleMessages;
@@ -54,9 +53,17 @@ public class ChatHudMixin extends DrawableHelper
 		message = event.getComponent();
 		indicator = WurstClient.INSTANCE.getOtfs().noChatReportsOtf
 			.modifyIndicator(message, signature, indicator);
+		shadow$logChatMessage(message, indicator);
 		shadow$addMessage(message, signature, client.inGameHud.getTicks(),
 			indicator, false);
 		ci.cancel();
+	}
+	
+	@Shadow
+	private void shadow$logChatMessage(Text message,
+		@Nullable MessageIndicator indicator)
+	{
+		
 	}
 	
 	@Shadow

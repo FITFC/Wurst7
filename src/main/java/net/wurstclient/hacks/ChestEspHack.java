@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -204,7 +204,6 @@ public class ChestEspHack extends Hack implements UpdateListener,
 		// GL settings
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-		GL11.glEnable(GL11.GL_LINE_SMOOTH);
 		GL11.glEnable(GL11.GL_CULL_FACE);
 		GL11.glDisable(GL11.GL_DEPTH_TEST);
 		
@@ -218,14 +217,14 @@ public class ChestEspHack extends Hack implements UpdateListener,
 		
 		if(style.getSelected().hasBoxes())
 		{
-			RenderSystem.setShader(GameRenderer::getPositionShader);
+			RenderSystem.setShader(GameRenderer::getPositionProgram);
 			groups.stream().filter(ChestEspGroup::isEnabled)
 				.forEach(espRenderer::renderBoxes);
 		}
 		
 		if(style.getSelected().hasLines())
 		{
-			RenderSystem.setShader(GameRenderer::getPositionShader);
+			RenderSystem.setShader(GameRenderer::getPositionProgram);
 			groups.stream().filter(ChestEspGroup::isEnabled)
 				.forEach(espRenderer::renderLines);
 		}
@@ -236,6 +235,5 @@ public class ChestEspHack extends Hack implements UpdateListener,
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 		GL11.glDisable(GL11.GL_BLEND);
-		GL11.glDisable(GL11.GL_LINE_SMOOTH);
 	}
 }

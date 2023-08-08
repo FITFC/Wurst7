@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -87,7 +87,7 @@ public final class StepHack extends Hack implements UpdateListener
 		if(!MC.world.isSpaceEmpty(player, box.offset(0, 1, 0)))
 			return;
 		
-		double stepHeight = -1;
+		double stepHeight = Double.NEGATIVE_INFINITY;
 		
 		ArrayList<Box> blockCollisions =
 			IMC.getWorld().getBlockCollisionsStream(player, box)

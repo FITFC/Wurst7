@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -39,7 +39,7 @@ public class Tree implements AutoCloseable
 		if(vertexBuffer != null)
 			vertexBuffer.close();
 		
-		vertexBuffer = new VertexBuffer();
+		vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
 		
 		int regionX = (stump.getX() >> 9) * 512;
 		int regionZ = (stump.getZ() >> 9) * 512;

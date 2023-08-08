@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -25,7 +25,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.minecraft.InsecureTextureException;
+import com.mojang.authlib.minecraft.InsecurePublicKeyException;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
@@ -45,9 +45,8 @@ public class PlayerSkinProviderMixin
 	
 	private static JsonObject capes;
 	
-	@Inject(at = {@At("HEAD")},
-		method = {
-			"loadSkin(Lcom/mojang/authlib/GameProfile;Lnet/minecraft/client/texture/PlayerSkinProvider$SkinTextureAvailableCallback;Z)V"},
+	@Inject(at = @At("HEAD"),
+		method = "loadSkin(Lcom/mojang/authlib/GameProfile;Lnet/minecraft/client/texture/PlayerSkinProvider$SkinTextureAvailableCallback;Z)V",
 		cancellable = true)
 	private void onLoadSkin(GameProfile profile,
 		PlayerSkinProvider.SkinTextureAvailableCallback callback,
@@ -59,15 +58,13 @@ public class PlayerSkinProviderMixin
 		Runnable runnable = () -> {
 			HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture> map =
 				Maps.newHashMap();
-			
 			try
 			{
 				map.putAll(sessionService.getTextures(profile, requireSecure));
-			}catch(InsecureTextureException var7)
+			}catch(InsecurePublicKeyException e)
 			{
-				
+				// empty catch block
 			}
-			
 			if(map.isEmpty())
 			{
 				profile.getProperties().clear();
@@ -81,12 +78,11 @@ public class PlayerSkinProviderMixin
 				{
 					sessionService.fillProfileProperties(profile,
 						requireSecure);
-					
 					try
 					{
 						map.putAll(
 							sessionService.getTextures(profile, requireSecure));
-					}catch(InsecureTextureException var6)
+					}catch(InsecurePublicKeyException e)
 					{
 						
 					}

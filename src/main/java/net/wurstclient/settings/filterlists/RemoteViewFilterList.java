@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -54,6 +54,8 @@ public final class RemoteViewFilterList extends EntityFilterList
 		
 		builder.add(new FilterGolemsSetting(
 			"Won't view iron golems, snow golems and shulkers.", true));
+		
+		builder.add(new FilterAllaysSetting("Won't view allays.", true));
 		
 		builder.add(new FilterInvisibleSetting("Won't view invisible entities.",
 			false));

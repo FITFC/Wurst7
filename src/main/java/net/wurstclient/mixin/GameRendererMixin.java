@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Wurst-Imperium and contributors.
+ * Copyright (c) 2014-2023 Wurst-Imperium and contributors.
  *
  * This source code is subject to the terms of the GNU General Public
  * License, version 3. If a copy of the GPL was not distributed with this
@@ -37,11 +37,14 @@ public abstract class GameRendererMixin
 {
 	private boolean cancelNextBobView;
 	
+	/**
+	 * Fires the CameraTransformViewBobbingEvent event and records whether the
+	 * next view-bobbing call should be cancelled.
+	 */
 	@Inject(at = @At(value = "INVOKE",
 		target = "Lnet/minecraft/client/render/GameRenderer;bobView(Lnet/minecraft/client/util/math/MatrixStack;F)V",
 		ordinal = 0),
-		method = {
-			"renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V"})
+		method = "renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V")
 	private void onRenderWorldViewBobbing(float tickDelta, long limitTime,
 		MatrixStack matrices, CallbackInfo ci)
 	{
@@ -53,6 +56,10 @@ public abstract class GameRendererMixin
 			cancelNextBobView = true;
 	}
 	
+	/**
+	 * Cancels the view-bobbing call if requested by the last
+	 * CameraTransformViewBobbingEvent.
+	 */
 	@Inject(at = @At("HEAD"),
 		method = "bobView(Lnet/minecraft/client/util/math/MatrixStack;F)V",
 		cancellable = true)
@@ -66,21 +73,25 @@ public abstract class GameRendererMixin
 		cancelNextBobView = false;
 	}
 	
+	/**
+	 * This mixin is injected into a random method call later in the
+	 * renderWorld() method to ensure that cancelNextBobView is always reset
+	 * after the view-bobbing call.
+	 */
 	@Inject(at = @At("HEAD"),
 		method = "renderHand(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/Camera;F)V")
-	private void renderHand(MatrixStack matrices, Camera camera,
+	private void onRenderHand(MatrixStack matrices, Camera camera,
 		float tickDelta, CallbackInfo ci)
 	{
 		cancelNextBobView = false;
 	}
 	
 	@Inject(
-		at = {@At(value = "FIELD",
+		at = @At(value = "FIELD",
 			target = "Lnet/minecraft/client/render/GameRenderer;renderHand:Z",
 			opcode = Opcodes.GETFIELD,
-			ordinal = 0)},
-		method = {
-			"renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V"})
+			ordinal = 0),
+		method = "renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V")
 	private void onRenderWorld(float partialTicks, long finishTimeNano,
 		MatrixStack matrixStack, CallbackInfo ci)
 	{
@@ -89,7 +100,7 @@ public abstract class GameRendererMixin
 	}
 	
 	@Inject(at = @At(value = "RETURN", ordinal = 1),
-		method = {"getFov(Lnet/minecraft/client/render/Camera;FZ)D"},
+		method = "getFov(Lnet/minecraft/client/render/Camera;FZ)D",
 		cancellable = true)
 	private void onGetFov(Camera camera, float tickDelta, boolean changingFov,
 		CallbackInfoReturnable<Double> cir)
@@ -98,10 +109,10 @@ public abstract class GameRendererMixin
 			.changeFovBasedOnZoom(cir.getReturnValueD()));
 	}
 	
-	@Inject(at = {@At(value = "INVOKE",
+	@Inject(at = @At(value = "INVOKE",
 		target = "Lnet/minecraft/entity/Entity;getCameraPosVec(F)Lnet/minecraft/util/math/Vec3d;",
 		opcode = Opcodes.INVOKEVIRTUAL,
-		ordinal = 0)}, method = {"updateTargetedEntity(F)V"})
+		ordinal = 0), method = "updateTargetedEntity(F)V")
 	private void onHitResultRayTrace(float float_1, CallbackInfo ci)
 	{
 		HitResultRayTraceEvent event = new HitResultRayTraceEvent(float_1);
@@ -112,8 +123,7 @@ public abstract class GameRendererMixin
 		at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/util/math/MathHelper;lerp(FFF)F",
 			ordinal = 0),
-		method = {
-			"renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V"})
+		method = "renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V")
 	private float wurstNauseaLerp(float delta, float first, float second)
 	{
 		if(!WurstClient.INSTANCE.getHax().antiWobbleHack.isEnabled())
@@ -122,9 +132,8 @@ public abstract class GameRendererMixin
 		return 0;
 	}
 	
-	@Inject(at = {@At("HEAD")},
-		method = {
-			"getNightVisionStrength(Lnet/minecraft/entity/LivingEntity;F)F"},
+	@Inject(at = @At("HEAD"),
+		method = "getNightVisionStrength(Lnet/minecraft/entity/LivingEntity;F)F",
 		cancellable = true)
 	private static void onGetNightVisionStrength(LivingEntity livingEntity,
 		float f, CallbackInfoReturnable<Float> cir)
@@ -136,11 +145,10 @@ public abstract class GameRendererMixin
 			cir.setReturnValue(fullbright.getNightVisionStrength());
 	}
 	
-	@Inject(at = {@At("HEAD")},
-		method = {
-			"bobViewWhenHurt(Lnet/minecraft/client/util/math/MatrixStack;F)V"},
+	@Inject(at = @At("HEAD"),
+		method = "tiltViewWhenHurt(Lnet/minecraft/client/util/math/MatrixStack;F)V",
 		cancellable = true)
-	private void onBobViewWhenHurt(MatrixStack matrixStack, float f,
+	private void onTiltViewWhenHurt(MatrixStack matrixStack, float f,
 		CallbackInfo ci)
 	{
 		if(WurstClient.INSTANCE.getHax().noHurtcamHack.isEnabled())
@@ -154,13 +162,13 @@ public abstract class GameRendererMixin
 	}
 	
 	@Override
-	public void loadWurstShader(Identifier identifier)
+	public void loadWurstShader(Identifier id)
 	{
-		loadShader(identifier);
+		loadPostProcessor(id);
 	}
 	
 	@Shadow
-	private void loadShader(Identifier identifier)
+	private void loadPostProcessor(Identifier id)
 	{
 		
 	}
